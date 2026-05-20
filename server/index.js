@@ -3,6 +3,8 @@ const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const vm = require('vm');
+const ExcelJS = require('exceljs');
+
 
 const QUESTIONS = require('./questions');
 const SCENARIOS = require('./scenarios');
@@ -228,15 +230,137 @@ app.post('/api/admin/ia-override', (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/admin/export.csv', (req, res) => {
-  const rows = [['nome','etapa','eliminado','quiz','ia','codigo','total','tempo_ms']];
+app.get('/api/admin/export.xlsx', requireAdmin, async (req, res) => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Recruiting Day';
+  workbook.created = new Date();
+
+  // ── Aba 1: Ranking Geral ──
+  const sheetRanking = workbook.addWorksheet('Ranking Geral');
+  sheetRanking.columns = [
+    { header: 'Posição',     key: 'pos',    width: 10 },
+    { header: 'Nome',        key: 'name',   width: 28 },
+    { header: 'Quiz (pts)',  key: 'quiz',   width: 14 },
+    { header: 'IA (pts)',    key: 'ia',     width: 14 },
+    { header: 'Código (pts)',key: 'code',   width: 16 },
+    { header: 'Total',       key: 'total',  width: 12 },
+    { header: 'Tempo (s)',   key: 'tempo',  width: 14 },
+    { header: 'Etapa',       key: 'stage',  width: 10 },
+    { header: 'Situação',    key: 'status', width: 14 },
+  ];
+
+  // Estilo do cabeçalho
+  sheetRanking.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    cell.alignment = { horizontal: 'center' };
+    cell.border = {
+      bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } }
+    };
+  });
+
+  const sorted = [...state.participants.values()]
+    .map(p => {
+      const total = (p.quizScore||0) + (p.iaScore||0) + (p.codeScore||0);
+      const tempo = p.finishedAt ? Math.round((p.finishedAt - p.startedAt) / 1000) : '—';
+      return { p, total, tempo };
+    })
+    .sort((a, b) => b.total - a.total || a.tempo - b.tempo);
+
+  sorted.forEach(({ p, total, tempo }, i) => {
+    const row = sheetRanking.addRow({
+      pos:    i + 1,
+      name:   p.name,
+      quiz:   p.quizScore  || 0,
+      ia:     p.iaScore    || 0,
+      code:   p.codeScore  || 0,
+      total,
+      tempo,
+      stage:  p.stage,
+      status: p.eliminated ? 'Eliminado' : 'Ativo',
+    });
+
+    // Destaque top 3
+    const gold   = { argb: 'FFFFF9C4' };
+    const silver = { argb: 'FFF5F5F5' };
+    const bronze = { argb: 'FFFFF3E0' };
+    if (i === 0) row.eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor: gold };   });
+    if (i === 1) row.eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor: silver }; });
+    if (i === 2) row.eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor: bronze }; });
+
+    if (p.eliminated) {
+      row.getCell('status').font = { color: { argb: 'FFDC2626' } };
+    }
+
+    row.getCell('pos').alignment = { horizontal: 'center' };
+    row.getCell('total').font = { bold: true };
+  });
+
+  sheetRanking.autoFilter = { from: 'A1', to: 'I1' };
+
+  // ── Aba 2: Respostas IA ──
+  const sheetIA = workbook.addWorksheet('Respostas IA');
+  sheetIA.columns = [
+    { header: 'Nome',       key: 'name',     width: 28 },
+    { header: 'Cenário',    key: 'scenario', width: 12 },
+    { header: 'Resposta',   key: 'text',     width: 70 },
+    { header: 'Pts IA',     key: 'pts',      width: 10 },
+  ];
+
+  sheetIA.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    cell.alignment = { horizontal: 'center' };
+  });
+
   for (const p of state.participants.values()) {
-    const pub = publicParticipant(p);
-    rows.push([p.name, p.stage, p.eliminated, pub.quizScore, pub.iaScore, pub.codeScore, pub.totalScore, pub.elapsedMs]);
+    (p.iaAnswers || []).forEach(a => {
+      const row = sheetIA.addRow({
+        name:     p.name,
+        scenario: `Cenário ${a.scenarioId}`,
+        text:     a.text || '',
+        pts:      p.iaScore || 0,
+      });
+      row.getCell('text').alignment = { wrapText: true };
+    });
   }
-  res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', 'attachment; filename="recruiting-day.csv"');
-  res.send(rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'));
+
+  // ── Aba 3: Resultados de Código ──
+  const sheetCode = workbook.addWorksheet('Desafio de Código');
+  sheetCode.columns = [
+    { header: 'Nome',         key: 'name',   width: 28 },
+    { header: 'Teste',        key: 'test',   width: 40 },
+    { header: 'Passou',       key: 'passed', width: 12 },
+    { header: 'Pts Código',   key: 'pts',    width: 14 },
+  ];
+
+  sheetCode.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+    cell.alignment = { horizontal: 'center' };
+  });
+
+  for (const p of state.participants.values()) {
+    (p.codeResults || []).forEach(t => {
+      const row = sheetCode.addRow({
+        name:   p.name,
+        test:   t.name,
+        passed: t.passed ? 'Sim' : 'Não',
+        pts:    p.codeScore || 0,
+      });
+      row.getCell('passed').font = {
+        color: { argb: t.passed ? 'FF0A875A' : 'FFDC2626' },
+        bold: true,
+      };
+      row.getCell('passed').alignment = { horizontal: 'center' };
+    });
+  }
+
+  // Envia o arquivo
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="recruiting-day-resultados.xlsx"');
+  await workbook.xlsx.write(res);
+  res.end();
 });
 
 app.post('/api/admin/reset', (req, res) => {
