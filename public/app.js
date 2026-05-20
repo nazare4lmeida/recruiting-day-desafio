@@ -19,7 +19,8 @@ const state = {
   startedAt: null,
   quizScore: 0,
   codeScore: 0,
-  answers: [], // histórico de respostas
+  answers: [], 
+  lastRanking: null,
 };
 
 const $ = (s) => document.querySelector(s);
@@ -742,11 +743,13 @@ function goFinal() {
       quizScore: 0,
       codeScore: 0,
       answers: [],
+      lastRanking: null,
     });
     $("#nameInput").value = "";
     $("#nameInputForm").value = "";
     show("register");
   };
+  if (state.lastRanking) renderFinalRanking(state.lastRanking);
 }
 
 function buildHistory(panel) {
@@ -783,6 +786,7 @@ function buildHistory(panel) {
 // RANKING — WebSocket
 // ──────────────────────────────────────────────────────────────
 socket.on("ranking:update", (ranking) => {
+  state.lastRanking = ranking;
   renderRanking("#rankingList", ranking.slice(0, 12));
 
   if ($("#screen-final") && !$("#screen-final").classList.contains("hidden")) {
