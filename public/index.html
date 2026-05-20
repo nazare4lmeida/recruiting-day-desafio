@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recruiting Day — Geração Tech</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="tech-canvas"></canvas>
+    <div class="bg-grid"></div>
+    <div class="bg-atmosphere"></div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="confetti-wrap hidden" id="confettiWrap"></div>
+
+    <!-- ══════════ HEADER ══════════ -->
+    <header class="header">
+      <a class="brand" href="#" onclick="return false;">
+        <div class="brand-logo">
+          <img src="/brand-logo.png" alt="Logo Recruiting Day" />
+        </div>
+      </a>
+
+      <div class="header-center" id="stageIndicator">
+        <span class="pill" data-stage="1">Quiz Técnico</span>
+        <span class="pill" data-stage="2">Desafio de Código</span>
+        <span class="pill" data-stage="3">Ranking</span>
+      </div>
+
+      <div class="header-right">
+        <div class="header-user hidden" id="headerUser">
+          <span class="user-name" id="headerUserName"></span>
+          <span class="user-pts" id="headerUserPts">0 pts</span>
+        </div>
+        <button class="theme-btn" id="themeToggle" title="Alternar tema">
+          🌙
+        </button>
+      </div>
+    </header>
+
+    <div class="wrapper">
+      <!-- ╔══════════════════════════════════════╗
+     ║  TELA 1 — HERO                      ║
+     ╚══════════════════════════════════════╝ -->
+      <section id="screen-register" class="screen active">
+        <div class="hero-section">
+          <!-- Coluna esquerda -->
+          <div class="hero-left slide-up">
+            <div class="hero-tag">
+              <span class="live-dot"></span>
+              Desafio Ao Vivo · <span id="heroDate"></span>
+            </div>
+
+            <h1 class="hero-title">
+              Mostre seu<br />
+              <span class="line2">potencial técnico.</span>
+            </h1>
+
+            <p class="hero-desc">
+              10 questões de tecnologia, Desafio IA Generativa e Soft Skills e
+              Desafio de Código. Prove o que você sabe no maior evento de recrutamento do
+              ano.
+            </p>
+
+            <!-- Input + botão inline -->
+            <div class="hero-cta-row" id="heroCta">
+              <input
+                id="nameInput"
+                type="text"
+                placeholder="Seu nome completo"
+                maxlength="60"
+                autocomplete="off"
+              />
+              <button class="btn-cta" id="startBtn">Iniciar Desafio →</button>
+            </div>
+            <p
+              id="registerError"
+              style="
+                color: var(--rose);
+                font-size: 13px;
+                min-height: 18px;
+                margin-top: -16px;
+                margin-bottom: 16px;
+              "
+            ></p>
+
+            <!-- Stats footer -->
+            <div class="hero-stats">
+              <div class="hero-stat">
+                <span class="hs-icon">📋</span>
+                <span class="hs-val">10</span>
+                <span class="hs-lbl">Questões</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hs-icon">🏆</span>
+                <span class="hs-val">5</span>
+                <span class="hs-lbl">Vagas Disponíveis</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hs-icon">⏱</span>
+                <span class="hs-val">~20 min</span>
+                <span class="hs-lbl">Duração</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coluna direita — painel terminal animado -->
+          <div class="hero-right pop-in">
+            <div class="hero-panel">
+              <!--
+          ════════════════════════════════════════════
+          SLOT PARA GIF / IMAGEM DO EVENTO
+          Para trocar: substitua todo o <div class="hero-img-slot">
+          por <img src="seu-arquivo.gif" alt="Recruiting Day" />
+          e coloque o arquivo na pasta public/
+          ════════════════════════════════════════════
+        -->
+              <div class="hero-img-slot" id="heroImgSlot">
+                <div class="img-placeholder">
+                  <!-- Janela terminal estilo VSCode digitando -->
+                  <div class="terminal-window">
+                    <div class="terminal-bar">
+                      <span class="dot-r"></span>
+                      <span class="dot-y"></span>
+                      <span class="dot-g"></span>
+                      <span class="terminal-title">recruiting-day.js</span>
+                    </div>
+                    <div class="terminal-body">
+                      <span class="prompt">$ </span><span id="termCmd"></span
+                      ><br />
+                      <span id="termOut"></span><br />
+                      <span class="cursor"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Badges na barra inferior do painel -->
+              <div class="hero-panel-bar">
+                <div class="panel-badge">
+                  <span class="dot"></span>Ranking ao vivo
+                </div>
+                <div class="panel-badge"><span>⚡</span>Vagas em Tech</div>
+                <div class="panel-badge"><span>🔐</span>3 etapas</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer
+          style="
+            text-align: center;
+            padding: 24px 32px 32px;
+            position: relative;
+            z-index: 1;
+          "
+        >
+          <img
+            src="logos-patro.png"
+            alt="Realização: IEL, FIEC, ADECE, Governo do Estado do Ceará"
+            style="
+              max-width: 600px;
+              width: 100%;
+              height: auto;
+              opacity: 0.85;
+              margin-top: 24px;
+            "
+          />
+          <p
+            style="
+              font-size: 11px;
+              color: var(--text-3);
+              font-family: &quot;JetBrains Mono&quot;, monospace;
+              margin-bottom: 16px;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+            "
+          >
+            Recruiting Day 2026 · Plataforma de Desafio Técnico
+          </p>
+        </footer>
+      </section>
+
+      <!-- ╔══════════════════════════════════════╗
+     ║  TELA 2 — FORMULÁRIO                ║
+     ╚══════════════════════════════════════╝ -->
+      <section id="screen-form" class="screen hidden">
+        <div class="form-screen-wrap">
+          <div class="form-steps">
+            <div class="form-step">
+              <div class="fstep-icon">📋</div>
+              <div class="fstep-label">Quiz Técnico</div>
+              <div class="fstep-sub">10 questões · 90s cada</div>
+            </div>
+            <div class="fstep-arrow">→</div>
+            <div class="form-step">
+              <div class="fstep-icon">⚡</div>
+              <div class="fstep-label">IA & Soft Skills</div>
+              <div class="fstep-sub">5 cenários abertos</div>
+            </div>
+            <div class="fstep-arrow">→</div>
+            <div class="form-step">
+              <div class="fstep-icon">💻</div>
+              <div class="fstep-label">Desafio de Código</div>
+              <div class="fstep-sub">JavaScript · testes auto</div>
+            </div>
+          </div>
+
+          <div class="register-card">
+            <div style="text-align: center; margin-bottom: 24px">
+              <div
+                style="
+                  font-size: 2.8rem;
+                  margin-bottom: 10px;
+                  filter: drop-shadow(0 0 20px rgba(59, 158, 255, 0.5));
+                "
+              >
+                🧠
+              </div>
+              <h2
+                style="
+                  font-size: 1.5rem;
+                  letter-spacing: -0.03em;
+                  margin-bottom: 6px;
+                "
+              >
+                Pronto para o desafio?
+              </h2>
+              <p class="sub">
+                O quiz começa assim que você confirmar seu nome.<br />
+                Você terá
+                <strong style="color: var(--text)">90 segundos</strong> por
+                questão e o
+                <strong style="color: var(--text)">ranking é ao vivo</strong>.
+              </p>
+            </div>
+            <div class="field">
+              <label for="nameInputForm">Seu nome</label>
+              <input
+                class="input"
+                id="nameInputForm"
+                type="text"
+                placeholder="Ex.: Maria Silva"
+                maxlength="60"
+                autocomplete="off"
+              />
+            </div>
+            <button class="btn primary btn-xl btn-full" id="startBtnForm">
+              Confirmar e Iniciar →
+            </button>
+            <p
+              id="registerErrorForm"
+              style="
+                color: var(--rose);
+                margin-top: 10px;
+                font-size: 13px;
+                min-height: 18px;
+                text-align: center;
+              "
+            ></p>
+            <div style="text-align: center; margin-top: 8px">
+              <button class="btn ghost btn-sm" id="backToHeroBtn">
+                ← Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ╔══════════════════════════════════════╗
+     ║  TELA 3 — QUIZ                      ║
+     ╚══════════════════════════════════════╝ -->
+      <section id="screen-quiz" class="screen hidden">
+        <!-- Overlay de feedback -->
+        <div id="feedbackOverlay" class="feedback-overlay hidden">
+          <div class="feedback-modal" id="feedbackModal">
+            <div class="fb-modal-header" id="fbHeader">
+              <div class="fb-icon" id="fbIcon">✓</div>
+              <div class="fb-header-text">
+                <div class="fb-header-title" id="fbTitle">
+                  Resposta Correta!
+                </div>
+                <div
+                  style="font-size: 12px; color: var(--text-3); margin-top: 2px"
+                  id="fbSubtitle"
+                ></div>
+              </div>
+              <div class="fb-pts-badge hidden" id="fbPts"></div>
+            </div>
+            <div class="fb-modal-body">
+              <div class="fb-correct-box" id="fbCorrectBox">
+                <div class="fb-correct-label">Resposta Correta</div>
+                <div class="fb-correct-value" id="fbCorrectValue"></div>
+              </div>
+              <div class="fb-explanation-label"><span>💡</span> Explicação</div>
+              <p class="fb-explanation-text" id="fbExplanation"></p>
+              <div class="fb-modal-footer">
+                <div class="fb-countdown">
+                  Avançando em <span id="fbCountdown">5</span>s...
+                </div>
+                <button class="btn primary btn-sm" id="nextBtn">
+                  Próxima Pergunta →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quiz-page">
+          <div class="quiz-progress-bar-wrap">
+            <div
+              class="quiz-progress-fill"
+              id="quizProgress"
+              style="width: 10%"
+            ></div>
+          </div>
+
+          <div class="quiz-subheader">
+            <div class="quiz-progress-label">
+              Pergunta <strong id="qCurrentNum">1</strong> de
+              <strong>10</strong>
+            </div>
+            <span class="quiz-difficulty-badge facil" id="qLevel">FÁCIL</span>
+          </div>
+
+          <div class="question-card fade-in">
+            <div class="qcard-top">
+              <div class="qcard-category">
+                <span class="cat-icon">📌</span>
+                <span id="qCategory">Fundamentos Web</span>
+              </div>
+              <div class="timer-inline">
+                <span class="timer-label">Tempo Restante</span>
+                <div class="timer-bar-wrap">
+                  <div class="timer-bar" id="timerBar"></div>
+                </div>
+                <span class="clock" id="clock">01:30</span>
+              </div>
+            </div>
+
+            <p class="question-text" id="qText"></p>
+            <div class="options" id="options"></div>
+
+            <div class="qcard-footer">
+              <button class="btn teal" id="confirmBtn" disabled>
+                Confirmar Resposta ✓
+              </button>
+            </div>
+          </div>
+
+          <div class="ranking-sidebar fade-in">
+            <div class="ranking-header">
+              <div class="ranking-title">🏆 Ranking</div>
+              <div class="live-badge"><span class="dot"></span>AO VIVO</div>
+            </div>
+            <div class="ranking" id="rankingList"></div>
+            <div class="ranking-pts-label">pontos acumulados</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ╔══════════════════════════════════════╗
+     ║  TELA 4 — IA & SOFT SKILLS          ║
+     ╚══════════════════════════════════════╝ -->
+      <section id="screen-ia" class="screen hidden">
+        <div class="ia-wrap">
+          <div
+            class="card fade-in"
+            style="position: relative; overflow: hidden"
+          >
+            <div
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(
+                  90deg,
+                  transparent,
+                  var(--accent),
+                  transparent
+                );
+                opacity: 0.5;
+              "
+            ></div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 6px;
+              "
+            >
+              <span class="badge medio">Etapa 2 de 3</span>
+            </div>
+            <h2>IA Generativa & Soft Skills</h2>
+            <p class="lead" style="margin-bottom: 24px">
+              Responda os cenários com clareza e objetividade. As respostas são
+              avaliadas por rubrica automática e podem ser revisadas pelo
+              recrutador.
+            </p>
+            <div id="scenariosList"></div>
+            <button
+              class="btn gold btn-lg btn-full"
+              id="submitIaBtn"
+              style="margin-top: 24px"
+            >
+              Enviar respostas →
+            </button>
+            <div
+              id="iaResult"
+              class="hidden"
+              style="
+                margin-top: 20px;
+                padding: 18px;
+                border-radius: var(--r);
+                background: rgba(16, 217, 160, 0.06);
+                border: 1px solid rgba(16, 217, 160, 0.2);
+              "
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ╔══════════════════════════════════════╗
+     ║  TELA 5 — CÓDIGO                    ║
+     ╚══════════════════════════════════════╝ -->
+      <section id="screen-code" class="screen hidden">
+        <div class="code-page">
+          <div class="code-breadcrumb">
+            <span class="cb-item">Recruiting Day</span>
+            <span class="cb-sep">/</span>
+            <span class="cb-item cb-active">Desafio de Código</span>
+          </div>
+
+          <div class="code-tags">
+            <span class="code-tag">💻 Desafio de Código</span>
+            <span class="code-tag">JavaScript</span>
+            <span class="code-tag gold">Intermediário</span>
+          </div>
+
+          <h2 class="code-title" id="codeTitle">Algoritmo</h2>
+          <p class="code-desc" id="codeDescription"></p>
+
+          <div class="code-layout">
+            <div>
+              <div class="code-editor-wrap">
+                <div class="editor-titlebar">
+                  <span class="tb-dot red"></span>
+                  <span class="tb-dot yellow"></span>
+                  <span class="tb-dot green"></span>
+                  <span class="editor-filename">solution.js</span>
+                </div>
+                <textarea
+                  class="code-area"
+                  id="codeEditor"
+                  spellcheck="false"
+                ></textarea>
+                <div class="editor-footer">
+                  <button class="btn ghost btn-sm" id="resetCodeBtn">
+                    ↺ Resetar
+                  </button>
+                  <button class="btn primary btn-sm" id="runCodeBtn">
+                    ▶ Executar Testes
+                  </button>
+                  <button
+                    class="btn gold btn-sm"
+                    id="finishCodeBtn"
+                    style="margin-left: auto"
+                  >
+                    Finalizar Desafio ✈
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="code-sidebar">
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="ph-icon">📄</span>
+                  Exemplo de Uso
+                </div>
+                <div class="code-example" id="codeExample">
+                  <span class="ce-c">// Carregando...</span>
+                </div>
+              </div>
+
+              <div class="code-panel">
+                <div class="code-panel-header">
+                  <span class="ph-icon">🧪</span>
+                  Testes Automatizados
+                </div>
+                <div class="test-list" id="testList"></div>
+              </div>
+
+              <div
+                id="testResultsSummary"
+                class="hidden"
+                style="
+                  padding: 12px 14px;
+                  background: var(--surface-2);
+                  border: 1px solid var(--border);
+                  border-radius: var(--r);
+                  font-size: 13px;
+                  font-weight: 600;
+                  text-align: center;
+                "
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ╔══════════════════════════════════════╗
+     ║  TELA 6 — RESULTADO FINAL           ║
+     ╚══════════════════════════════════════╝ -->
+      <section id="screen-final" class="screen hidden">
+        <div class="final-page">
+          <div class="final-hero text-center fade-in">
+            <div class="final-complete-badge">
+              <span>✓</span> Desafio Completo!
+            </div>
+            <h1 class="final-name">
+              Parabéns,
+              <span class="name-highlight" id="finalPlayerName">Jogador</span>!
+            </h1>
+            <p class="final-sub" id="finalSubtitle">
+              Você ficou em <strong>—</strong> com <strong>—</strong> no total
+            </p>
+            <div class="final-stats">
+              <div class="fs-item">
+                <div class="fs-val" id="fsTempo">—</div>
+                <div class="fs-key">Tempo total</div>
+              </div>
+              <div class="fs-item">
+                <div class="fs-val" id="fsAcertos">—</div>
+                <div class="fs-key">Acertos no Quiz</div>
+              </div>
+              <div class="fs-item">
+                <div class="fs-val" id="fsCodigo">—</div>
+                <div class="fs-key">Pts no Código</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="top3-section fade-in">
+            <div class="section-label">🏆 Top 3 — Ranking Final</div>
+            <div class="podium" id="podiumWrap"></div>
+          </div>
+
+          <div class="final-bottom fade-in">
+            <div class="cert-card">
+              <div class="cert-label">Certificado Digital</div>
+              <div class="cert-icon" id="certIcon">⭐</div>
+              <div class="cert-level" id="certLevel">Intermediário</div>
+              <div class="cert-sub" id="certSub">Bom trabalho!</div>
+              <div class="cert-divider"></div>
+              <div class="cert-for">Certificado para</div>
+              <div class="cert-name" id="certName"></div>
+              <div class="cert-info" id="certInfo"></div>
+            </div>
+
+            <div class="ranking-full-card">
+              <div class="ranking-full-title">
+                <span>≡</span> Ranking Completo
+              </div>
+              <div class="ranking-full" id="finalRanking"></div>
+            </div>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 14px;
+            "
+          >
+            <button class="history-toggle" id="historyToggle">
+              ▾ Ver histórico de respostas
+            </button>
+            <div
+              id="historyPanel"
+              class="hidden"
+              style="width: 100%; max-width: 700px"
+            ></div>
+            <div class="final-actions">
+              <button class="btn secondary" id="shareBtn">
+                ↗ Compartilhar Resultado
+              </button>
+              <button class="btn primary" id="restartBtn">
+                ↺ Tentar Novamente
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- /.wrapper -->
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Canvas tech animado (nós de rede + snippets flutuantes) -->
+    <script>
+      (function initTechCanvas() {
+        const canvas = document.getElementById("tech-canvas");
+        const ctx = canvas.getContext("2d");
+        let W, H, nodes, floaters;
+        const SNIPPETS = [
+          "const dev = true;",
+          'git commit -m "🚀"',
+          "npm run start",
+          "SELECT * FROM talents",
+          "function solve(n) {",
+          "return arr.sort()",
+          "{ status: 200 }",
+          "import React from",
+          '<div class="hero">',
+          "docker build .",
+          "O(log n)",
+          "API REST",
+          "async/await",
+          "JOIN ON id",
+          "if (talent > 0)",
+        ];
+        function resize() {
+          W = canvas.width = window.innerWidth;
+          H = canvas.height = window.innerHeight;
+          initNodes();
+          initFloaters();
+        }
+        function initNodes() {
+          const count = Math.floor((W * H) / 28000);
+          nodes = Array.from({ length: count }, () => ({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            r: 1.5 + Math.random() * 2,
+          }));
+        }
+        function initFloaters() {
+          const count = Math.min(12, Math.floor(W / 120));
+          floaters = Array.from({ length: count }, () => ({
+            text: SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)],
+            x: Math.random() * W,
+            y: Math.random() * H,
+            vy: -0.18 - Math.random() * 0.25,
+            opacity: 0.04 + Math.random() * 0.08,
+          }));
+        }
+        const isDark = () =>
+          document.documentElement.getAttribute("data-theme") !== "light";
+        function getColors() {
+          return isDark()
+            ? { node: "#3B9EFF", line: "#3B9EFF", text: "#22D3EE" }
+            : { node: "#2563EB", line: "#2563EB", text: "#2563EB" };
+        }
+        let raf;
+        function draw() {
+          ctx.clearRect(0, 0, W, H);
+          const { node: nc, line: lc, text: tc } = getColors();
+          nodes.forEach((n) => {
+            n.x += n.vx;
+            n.y += n.vy;
+            if (n.x < 0) n.x = W;
+            if (n.x > W) n.x = 0;
+            if (n.y < 0) n.y = H;
+            if (n.y > H) n.y = 0;
+          });
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const dx = nodes[i].x - nodes[j].x,
+                dy = nodes[i].y - nodes[j].y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 160) {
+                ctx.save();
+                ctx.strokeStyle = lc;
+                ctx.globalAlpha = 0.12 - dist / 1400;
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].x, nodes[i].y);
+                ctx.lineTo(nodes[j].x, nodes[j].y);
+                ctx.stroke();
+                ctx.restore();
+              }
+            }
+          }
+          nodes.forEach((n) => {
+            ctx.save();
+            ctx.fillStyle = nc;
+            ctx.globalAlpha = 0.25;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+          ctx.save();
+          ctx.font = '500 13px "JetBrains Mono",monospace';
+          floaters.forEach((f) => {
+            f.y += f.vy;
+            if (f.y < -30) {
+              f.y = H + 20;
+              f.x = Math.random() * W;
+              f.text = SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)];
+            }
+            ctx.fillStyle = tc;
+            ctx.globalAlpha = f.opacity;
+            ctx.fillText(f.text, f.x, f.y);
+          });
+          ctx.restore();
+          raf = requestAnimationFrame(draw);
+        }
+        window.addEventListener("resize", () => {
+          cancelAnimationFrame(raf);
+          resize();
+          draw();
+        });
+        resize();
+        draw();
+      })();
+
+      // Data no hero tag
+      (function setDate() {
+        const el = document.getElementById("heroDate");
+        if (el)
+          el.textContent = new Date().toLocaleDateString("pt-BR", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+      })();
+    </script>
+
+    <!-- Terminal animado no hero (janela VSCode digitando comandos) -->
+    <script>
+      (function animateTerminal() {
+        const lines = [
+          { cmd: "node recruiting-day.js", out: "" },
+          { cmd: "", out: "🚀 Servidor iniciado em :3000" },
+          { cmd: "git log --oneline", out: "" },
+          { cmd: "", out: "a1b2c3d feat: quiz ao vivo" },
+          { cmd: "npm run start", out: "" },
+          { cmd: "", out: "✓ WebSocket conectado" },
+          { cmd: "git status", out: "" },
+          { cmd: "", out: "On branch main — up to date" },
+        ];
+        let li = 0;
+        const cmdEl = document.getElementById("termCmd");
+        const outEl = document.getElementById("termOut");
+        if (!cmdEl || !outEl) return;
+
+        function typeNext() {
+          const l = lines[li % lines.length];
+          cmdEl.textContent = "";
+          outEl.textContent = "";
+          if (l.cmd) {
+            let ci = 0;
+            const t = setInterval(() => {
+              cmdEl.textContent += l.cmd[ci++];
+              if (ci >= l.cmd.length) {
+                clearInterval(t);
+                setTimeout(() => {
+                  if (l.out) outEl.textContent = l.out;
+                  li++;
+                  setTimeout(typeNext, 1800);
+                }, 400);
+              }
+            }, 55);
+          } else {
+            outEl.textContent = l.out;
+            li++;
+            setTimeout(typeNext, 1600);
+          }
+        }
+        setTimeout(typeNext, 600);
+      })();
+    </script>
+
+    <script src="app.js"></script>
+  </body>
+</html>

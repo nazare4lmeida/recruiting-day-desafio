@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Recruiting Day</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* ── Estilos exclusivos do admin ── */
+
+  /* CORREÇÃO DO SCROLL E POSICIONAMENTO */
+  #tech-canvas, .bg-grid, .bg-atmosphere {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    box-sizing: border-box;
+    height: 70px; /* Define uma altura fixa para alinhar com o wrapper */
+  }
+
+  .wrapper {
+    margin-top: 70px; /* Empurra todo o conteúdo para baixo do header fixo */
+    box-sizing: border-box;
+  }
+
+  /* Stat cards no topo */
+  .admin-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .admin-stat-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color var(--t) var(--ease), transform var(--t) var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .admin-stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: var(--asc-color, var(--accent));
+    border-radius: 0 2px 2px 0;
+  }
+  .admin-stat-card:hover { border-color: var(--border-2); transform: translateY(-2px); }
+
+  .asc-icon {
+    width: 44px; height: 44px; border-radius: var(--r);
+    display: grid; place-items: center;
+    font-size: 20px; flex-shrink: 0;
+    background: rgba(255,255,255,.05);
+  }
+  .asc-body {}
+  .asc-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.65rem; font-weight: 700; line-height: 1;
+    color: var(--asc-color, var(--accent));
+    margin-bottom: 3px;
+  }
+  .asc-lbl {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .09em;
+    color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Botões de ação das etapas */
+  .stage-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+
+  .stage-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 20px;
+    border: none; border-radius: var(--r-lg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13.5px; font-weight: 700;
+    cursor: pointer; transition: all var(--t) var(--ease);
+    position: relative; overflow: hidden;
+  }
+  .stage-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.15) 50%, transparent 62%);
+    transform: translateX(-120%); transition: transform .5s var(--ease);
+  }
+  .stage-btn:hover::after { transform: translateX(120%); }
+  .stage-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  .stage-btn:active { transform: none; }
+
+  .stage-btn.s1 {
+    background: linear-gradient(135deg, #1a5ccc, var(--accent));
+    color: #fff; box-shadow: 0 6px 20px rgba(59,158,255,.35);
+  }
+  .stage-btn.s2 {
+    background: linear-gradient(135deg, #10b5b8, var(--gold));
+    color: #0f0800; box-shadow: 0 6px 20px rgba(75, 220, 245, 0.35);
+  }
+  .stage-btn.s3 {
+    background: linear-gradient(135deg, #0d9060, var(--emerald));
+    color: #fff; box-shadow: 0 6px 20px rgba(16,217,160,.3);
+  }
+  .stage-btn.export {
+    background: var(--surface-2); color: var(--text-2);
+    border: 1px solid var(--border-2); box-shadow: none;
+    text-decoration: none;
+  }
+  .stage-btn.export:hover { border-color: var(--accent); color: var(--accent-2); }
+  .stage-btn.reset {
+    background: rgba(255,90,110,.1); color: var(--rose);
+    border: 1px solid rgba(255,90,110,.25);
+  }
+  .stage-btn.reset:hover { background: rgba(255,90,110,.18); border-color: var(--rose); }
+
+  .stage-btn-icon { font-size: 16px; flex-shrink: 0; }
+  .stage-btn-text {}
+  .stage-btn-label { display: block; font-size: 13.5px; }
+  .stage-btn-sub   { display: block; font-size: 10.5px; font-weight: 500; opacity: .75; margin-top: 1px; }
+
+  /* Grid 2 colunas para ranking + sidebar */
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 24px;
+  }
+
+  /* Ranking table */
+  .ranking-table { display: flex; flex-direction: column; gap: 0; }
+  .rt-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 80px 80px 80px 70px;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background var(--t) var(--ease);
+    font-size: 13px;
+  }
+  .rt-row:last-child { border-bottom: none; }
+  .rt-row:hover { background: var(--surface); }
+  .rt-row.header {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .09em; color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface); border-radius: var(--r) var(--r) 0 0;
+    padding: 10px 16px;
+  }
+  .rt-row.gold   { background: rgba(245, 239, 75, 0.05); }
+  .rt-row.silver { background: rgba(192, 200, 225, 0.04); }
+  .rt-row.bronze { background: rgba(205,127,50,.04); }
+  .rt-row.elim   { opacity: .35; filter: grayscale(.6); }
+
+  .rt-pos {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 13px; text-align: center;
+    color: var(--text-3);
+  }
+  .rt-row.gold   .rt-pos { color: var(--gold); }
+  .rt-row.silver .rt-pos { color: #bcc4d8; }
+  .rt-row.bronze .rt-pos { color: #3a86c0; }
+
+  .rt-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rt-stage {
+    font-size: 10px; background: var(--surface-3);
+    border-radius: 999px; padding: 2px 8px;
+    color: var(--text-3); display: inline-block;
+    font-family: 'JetBrains Mono', monospace; margin-left: 6px;
+  }
+  .rt-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; color: var(--accent-2); text-align: right;
+  }
+  .rt-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-3); text-align: right;
+  }
+  .rt-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .rt-badge.ativo   { background: rgba(16,217,160,.12); color: var(--emerald); }
+  .rt-badge.eliminado { background: rgba(255,90,110,.12); color: var(--rose); }
+
+  /* Funil visual */
+  .funil {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .funil-step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    transition: all var(--t) var(--ease);
+  }
+  .funil-step:hover { border-color: var(--border-2); }
+  .funil-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+  .funil-num.n1 { background: rgba(59,158,255,.15); color: var(--accent-2); }
+  .funil-num.n2 { background: rgba(75, 242, 245, 0.15); color: var(--gold); }
+  .funil-num.n3 { background: rgba(16,217,160,.15); color: var(--emerald); }
+  .funil-text { flex: 1; }
+  .funil-label { font-size: 13px; font-weight: 600; }
+  .funil-sub   { font-size: 11px; color: var(--text-3); margin-top: 1px; font-family: 'JetBrains Mono', monospace; }
+  .funil-arrow { font-size: 16px; color: var(--text-3); text-align: center; padding: 2px 0; }
+
+  /* Details de participante */
+  .participant-details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    margin-top: 8px;
+    transition: border-color var(--t) var(--ease);
+  }
+  .participant-details:hover { border-color: var(--border-2); }
+
+  .pd-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+    padding: 14px 18px; cursor: pointer;
+    list-style: none; outline: none;
+    transition: background var(--t) var(--ease);
+  }
+  .pd-summary:hover { background: var(--surface-2); }
+
+  .pd-left { display: flex; align-items: center; gap: 12px; }
+  .pd-avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+    flex-shrink: 0; font-family: 'Space Grotesk', sans-serif;
+  }
+  .pd-name { font-size: 14.5px; font-weight: 700; }
+
+  .pd-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pd-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 700; color: var(--accent-2);
+  }
+  .pd-breakdown {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-3);
+  }
+
+  .pd-body {
+    padding: 16px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .ia-answer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r);
+    padding: 12px 14px;
+    margin-top: 8px;
+  }
+  .ia-answer-id {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: var(--accent-2);
+    font-family: 'JetBrains Mono', monospace; margin-bottom: 5px;
+  }
+  .ia-answer-text { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+
+  .pd-ia-override {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 14px; flex-wrap: wrap;
+  }
+  .pd-ia-override label {
+    font-size: 12px; font-weight: 600; color: var(--text-2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pd-ia-override input {
+    width: 100px; padding: 7px 12px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--r-sm); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    outline: none; transition: border-color var(--t) var(--ease);
+  }
+  .pd-ia-override input:focus { border-color: var(--accent); }
+
+  /* Header do admin */
+  .admin-header-bar {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .section-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Chip de total de participantes */
+  .total-chip {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text-3); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 12px;
+  }
+  .total-chip strong { color: var(--accent-2); }
+
+  /* Seção colapsável de detalhes */
+  .details-section {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    overflow: hidden;
+  }
+  .details-section-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  @media (max-width: 1000px) {
+    .admin-grid { grid-template-columns: 1fr; }
+    .admin-stats-row { grid-template-columns: 1fr 1fr; }
+    .rt-row { grid-template-columns: 36px 1fr 60px 60px; }
+    .rt-row .rt-sub, .rt-row .rt-badge { display: none; }
+  }
+  @media (max-width: 600px) {
+    .admin-stats-row { grid-template-columns: 1fr 1fr; }
+    .stage-actions { flex-direction: column; }
+    .stage-btn { width: 100%; }
+    .rt-row { grid-template-columns: 32px 1fr 56px; }
+    .rt-row .rt-sub, .rt-row .rt-badge, .rt-row:not(.header) > :nth-child(4), .rt-row:not(.header) > :nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="tech-canvas"></canvas>
+<div class="bg-grid"></div>
+<div class="bg-atmosphere"></div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="header">
+  <a class="brand" href="#" onclick="return false;">
+    <div class="brand-logo" style="background:linear-gradient(135deg,#7c3aed,var(--violet));">AD</div>
+    <div class="brand-name">
+      <span class="top">Painel Admin</span>
+      <span class="bottom">Recruiting Day · Geração Tech</span>
+    </div>
+  </a>
+
+  <div class="header-center">
+    <div class="total-chip">
+      Participantes: <strong id="totalP">0</strong>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <button class="theme-btn" id="themeToggle" title="Alternar tema">🌙</button>
+  </div>
+</header>
+
+<div class="wrapper">
+<div style="max-width:1200px;margin:0 auto;padding:28px 24px;display:flex;flex-direction:column;gap:24px;">
+
+  <!-- ── Stat cards ── -->
+  <div class="admin-stats-row">
+    <div class="admin-stat-card" style="--asc-color:var(--accent-2);">
+      <div class="asc-icon">👥</div>
+      <div class="asc-body">
+        <div class="asc-val" id="statActive">0</div>
+        <div class="asc-lbl">Ativos</div>
+      </div>
+    </div>
+    <div class="admin-stat-card" style="--asc-color:var(--rose);">
+      <div class="asc-icon">🚫</div>
+      <div class="asc-body">
+        <div class="asc-val" id="statElim">0</div>
+        <div class="asc-lbl">Eliminados</div>
+      </div>
+    </div>
+    <div class="admin-stat-card" style="--asc-color:var(--gold);">
+      <div class="asc-icon">📊</div>
+      <div class="asc-body">
+        <div class="asc-val" id="statAvg">0</div>
+        <div class="asc-lbl">Média pts</div>
+      </div>
+    </div>
+    <div class="admin-stat-card" style="--asc-color:var(--emerald);">
+      <div class="asc-icon">🏆</div>
+      <div class="asc-body">
+        <div class="asc-val" id="statTop">—</div>
+        <div class="asc-lbl">Líder pts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Controle de etapas ── -->
+  <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--violet),var(--accent),transparent);opacity:.6;"></div>
+    <div class="admin-header-bar" style="margin-bottom:18px;">
+      <div class="section-title">⚙ Controle de Etapas</div>
+      <div style="font-size:12px;color:var(--text-3);">Ações irreversíveis — confirme antes de aplicar</div>
+    </div>
+    <div class="stage-actions">
+
+      <button class="stage-btn s1" onclick="advance(1)">
+        <span class="stage-btn-icon">①</span>
+        <span class="stage-btn-text">
+          <span class="stage-btn-label">Encerrar Quiz</span>
+          <span class="stage-btn-sub">Manter Top 20</span>
+        </span>
+      </button>
+
+      <button class="stage-btn s2" onclick="advance(2)">
+        <span class="stage-btn-icon">②</span>
+        <span class="stage-btn-text">
+          <span class="stage-btn-label">Encerrar IA & Skills</span>
+          <span class="stage-btn-sub">Manter Top 10</span>
+        </span>
+      </button>
+
+      <button class="stage-btn s3" onclick="advance(3)">
+        <span class="stage-btn-icon">③</span>
+        <span class="stage-btn-text">
+          <span class="stage-btn-label">Encerrar Código</span>
+          <span class="stage-btn-sub">Top 5 Finalistas 🏆</span>
+        </span>
+      </button>
+
+      <a class="stage-btn export" href="/api/admin/export.csv" download>
+        <span class="stage-btn-icon">⬇</span>
+        <span class="stage-btn-text">
+          <span class="stage-btn-label">Exportar CSV</span>
+          <span class="stage-btn-sub">Todos os participantes</span>
+        </span>
+      </a>
+
+      <button class="stage-btn reset" onclick="resetAll()">
+        <span class="stage-btn-icon">↺</span>
+        <span class="stage-btn-text">
+          <span class="stage-btn-label">Resetar Evento</span>
+          <span class="stage-btn-sub">Apaga todos os dados</span>
+        </span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── Grid: Ranking + Sidebar ── -->
+  <div class="admin-grid">
+
+    <!-- Ranking ao vivo -->
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);">
+        <div class="section-title">🏆 Ranking ao vivo</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--emerald);background:rgba(16,217,160,.1);border:1px solid rgba(16,217,160,.2);border-radius:999px;padding:4px 10px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--emerald);animation:livePulse 1.8s ease-in-out infinite;display:inline-block;"></span>
+          AO VIVO
+        </div>
+      </div>
+
+      <!-- Cabeçalho da tabela -->
+      <div class="rt-row header">
+        <span>#</span>
+        <span>Participante</span>
+        <span style="text-align:right;">Quiz</span>
+        <span style="text-align:right;">IA</span>
+        <span style="text-align:right;">Código</span>
+        <span style="text-align:right;">Total</span>
+      </div>
+
+      <div class="ranking-table" id="rankingList"
+           style="max-height:60vh;overflow-y:auto;">
+        <div style="padding:32px;text-align:center;color:var(--text-3);font-size:13px;">
+          Aguardando participantes...
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: Funil + Vagas -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Funil visual -->
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-xl);padding:20px;">
+        <div class="section-title" style="margin-bottom:14px;">⚡ Funil Eliminatório</div>
+        <div class="funil">
+          <div class="funil-step">
+            <div class="funil-num n1">1</div>
+            <div class="funil-text">
+              <div class="funil-label">Quiz Técnico</div>
+              <div class="funil-sub">Todos → Top 20</div>
+            </div>
+          </div>
+          <div class="funil-arrow">↓</div>
+          <div class="funil-step">
+            <div class="funil-num n2">2</div>
+            <div class="funil-text">
+              <div class="funil-label">IA & Soft Skills</div>
+              <div class="funil-sub">Top 20 → Top 10</div>
+            </div>
+          </div>
+          <div class="funil-arrow">↓</div>
+          <div class="funil-step">
+            <div class="funil-num n3">3</div>
+            <div class="funil-text">
+              <div class="funil-label">Desafio de Código</div>
+              <div class="funil-sub">Top 10 → Top 5 🏆</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vagas -->
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-xl);padding:20px;">
+        <div class="section-title" style="margin-bottom:14px;">🎯 Vagas em disputa</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);border-left:3px solid var(--gold);transition:all var(--t) var(--ease);">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:800;color:var(--gold);line-height:1;flex-shrink:0;">2</div>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;margin-bottom:2px;">Estágios</div>
+              <div style="font-size:11px;color:var(--text-3);">Geração Tech</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);border-left:3px solid var(--accent);transition:all var(--t) var(--ease);">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:800;color:var(--accent-2);line-height:1;flex-shrink:0;">3</div>
+            <div>
+              <div style="font-size:13.5px;font-weight:700;margin-bottom:2px;">Monitores(as)</div>
+              <div style="font-size:11px;color:var(--text-3);">Geração Tech</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /.admin-grid -->
+
+  <!-- ── Detalhes & Ajuste IA ── -->
+  <div class="details-section">
+    <div class="details-section-header">
+      <div>
+        <div class="section-title" style="margin-bottom:3px;">🔍 Detalhes & Ajuste Manual — IA</div>
+        <div style="font-size:13px;color:var(--text-2);margin-top:4px;">
+          Clique em um participante para ver respostas e ajustar a pontuação da Etapa 2.
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px;" id="detailsList">
+      <div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px;">
+        Aguardando dados...
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /.wrapper -->
+
+<!-- Canvas tech (igual ao index) -->
+<script>
+(function initTechCanvas() {
+  const canvas = document.getElementById('tech-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes, floaters;
+  const SNIPPETS = [
+    'const dev = true;','git commit -m "🚀"','npm run start',
+    'SELECT * FROM talents','function solve(n) {','return arr.sort()',
+    '{ status: 200 }','import React from','docker build .','O(log n)',
+    'API REST','async/await','JOIN ON id','if (talent > 0)',
+  ];
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    const count = Math.floor((W * H) / 28000);
+    nodes = Array.from({ length: count }, () => ({
+      x: Math.random()*W, y: Math.random()*H,
+      vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3,
+      r: 1.5 + Math.random()*2,
+    }));
+    const fc = Math.min(10, Math.floor(W/130));
+    floaters = Array.from({ length: fc }, () => ({
+      text: SNIPPETS[Math.floor(Math.random()*SNIPPETS.length)],
+      x: Math.random()*W, y: Math.random()*H,
+      vy: -.15 - Math.random()*.2,
+      opacity: .03 + Math.random()*.06,
+    }));
+  }
+  const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
+  function getColors() {
+    return isDark()
+      ? { node:'#3B9EFF', line:'#3B9EFF', text:'#22D3EE' }
+      : { node:'#2563EB', line:'#2563EB', text:'#2563EB' };
+  }
+  let raf;
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    const {node:nc,line:lc,text:tc} = getColors();
+    nodes.forEach(n => {
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<0)n.x=W; if(n.x>W)n.x=0;
+      if(n.y<0)n.y=H; if(n.y>H)n.y=0;
+    });
+    for(let i=0;i<nodes.length;i++) {
+      for(let j=i+1;j<nodes.length;j++) {
+        const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<150) {
+          ctx.save(); ctx.strokeStyle=lc;
+          ctx.globalAlpha=.10-dist/1500; ctx.lineWidth=.7;
+          ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y);
+          ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke(); ctx.restore();
+        }
+      }
+    }
+    nodes.forEach(n => {
+      ctx.save(); ctx.fillStyle=nc; ctx.globalAlpha=.2;
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); ctx.restore();
+    });
+    ctx.save(); ctx.font='500 12px "JetBrains Mono",monospace';
+    floaters.forEach(f => {
+      f.y+=f.vy;
+      if(f.y<-30){f.y=H+20;f.x=Math.random()*W;f.text=SNIPPETS[Math.floor(Math.random()*SNIPPETS.length)];}
+      ctx.fillStyle=tc; ctx.globalAlpha=f.opacity; ctx.fillText(f.text,f.x,f.y);
+    });
+    ctx.restore();
+    raf=requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{ cancelAnimationFrame(raf); resize(); draw(); });
+  resize(); draw();
+})();
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ── Tema ──
+(function () {
+  const saved = localStorage.getItem('rd-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+})();
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('rd-theme', next);
+  document.getElementById('themeToggle').textContent = next === 'dark' ? '🌙' : '☀️';
+});
+
+// ── Toast ──
+function showToast(msg, type = 'info', duration = 3500) {
+  const c = document.getElementById('toastContainer');
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'•'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'toastIn .25s reverse both';
+    setTimeout(() => t.remove(), 280);
+  }, duration);
+}
+
+// ── Estado ──
+const socket = io();
+let stateData = null;
+
+async function loadState() {
+  stateData = await fetch('/api/admin/state').then(r => r.json());
+  renderDetails();
+}
+
+// ── Socket ──
+socket.on('ranking:update', ranking => {
+  // Contadores no topo
+  document.getElementById('totalP').textContent = ranking.length;
+  const active = ranking.filter(p => !p.eliminated).length;
+  const elim   = ranking.filter(p => p.eliminated).length;
+  const avg    = ranking.length ? Math.round(ranking.reduce((s,p) => s + p.totalScore, 0) / ranking.length) : 0;
+  const top    = ranking.length ? ranking[0].totalScore : '—';
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statElim').textContent   = elim;
+  document.getElementById('statAvg').textContent    = avg;
+  document.getElementById('statTop').textContent    = top;
+
+  // Tabela de ranking
+  const list = document.getElementById('rankingList');
+  list.innerHTML = '';
+
+  if (!ranking.length) {
+    list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-3);font-size:13px;">Nenhum participante ainda.</div>';
+    loadState();
+    return;
+  }
+
+  ranking.forEach((p, i) => {
+    const row = document.createElement('div');
+    let cls = 'rt-row';
+    if (i === 0) cls += ' gold';
+    else if (i === 1) cls += ' silver';
+    else if (i === 2) cls += ' bronze';
+    if (p.eliminated) cls += ' elim';
+    row.className = cls;
+    row.innerHTML = `
+      <div class="rt-pos">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i+1)}</div>
+      <div class="rt-name">
+        ${escapeHtml(p.name)}
+        <span class="rt-stage">etapa ${p.stage}</span>
+      </div>
+      <div class="rt-sub" style="text-align:right;">${p.quizScore}</div>
+      <div class="rt-sub" style="text-align:right;">${p.iaScore}</div>
+      <div class="rt-sub" style="text-align:right;">${p.codeScore}</div>
+      <div class="rt-score">${p.totalScore}</div>
+    `;
+    list.appendChild(row);
+  });
+
+  loadState();
+});
+
+socket.on('stage:advanced', ({ stage, keep }) => {
+  showToast(`Etapa ${stage} encerrada — Top ${keep} avançaram!`, 'success');
+});
+
+socket.on('admin:reset', () => showToast('Evento resetado.', 'info'));
+
+// ── Ações ──
+async function advance(stage) {
+  if (!confirm(`Aplicar corte da Etapa ${stage}?\nEsta ação é irreversível.`)) return;
+  const r = await fetch('/api/admin/advance', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ stage }),
+  }).then(r => r.json());
+  showToast(`Corte aplicado — ${r.advanced} participante(s) avançaram.`, 'success');
+}
+
+async function resetAll() {
+  if (!confirm('Apagar TODOS os participantes e zerar o evento?\nEsta ação é irreversível!')) return;
+  await fetch('/api/admin/reset', { method:'POST' });
+  showToast('Evento resetado.', 'info');
+}
+
+// ── Detalhes & ajuste IA ──
+function renderDetails() {
+  const wrap = document.getElementById('detailsList');
+  wrap.innerHTML = '';
+  if (!stateData || !stateData.participants.length) {
+    wrap.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-3);font-size:13px;">Nenhum participante registrado ainda.</div>';
+    return;
+  }
+
+  stateData.participants
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .forEach((p, i) => {
+      const initials = p.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+
+      const iaAnswersHtml = (p.iaAnswers || []).length
+        ? p.iaAnswers.map(a => `
+            <div class="ia-answer-card">
+              <div class="ia-answer-id">Cenário #${a.scenarioId}</div>
+              <div class="ia-answer-text">${escapeHtml(a.text || '')}</div>
+            </div>
+          `).join('')
+        : '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">Sem respostas ainda.</div>';
+
+      const details = document.createElement('details');
+      details.className = 'participant-details';
+      details.innerHTML = `
+        <summary class="pd-summary">
+          <div class="pd-left">
+            <div class="pd-avatar">${initials}</div>
+            <div>
+              <div class="pd-name">${escapeHtml(p.name)}</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px;font-family:'JetBrains Mono',monospace;">
+                ${p.eliminated
+                  ? '<span style="color:var(--rose);">✗ eliminado</span>'
+                  : `<span style="color:var(--emerald);">● ativo</span> · etapa ${p.stage}`}
+              </div>
+            </div>
+          </div>
+          <div class="pd-right">
+            <div class="pd-total">${p.totalScore} pts</div>
+            <div class="pd-breakdown">Q ${p.quizScore} / IA ${p.iaScore} / C ${p.codeScore}</div>
+          </div>
+        </summary>
+        <div class="pd-body">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-3);font-family:'JetBrains Mono',monospace;margin-bottom:8px;">
+            Respostas — Etapa 2 (IA & Soft Skills)
+          </div>
+          ${iaAnswersHtml}
+          <div class="pd-ia-override">
+            <label>Ajustar pontuação IA:</label>
+            <input type="number" min="0" max="100" value="${p.iaScore}" id="ia_${p.id}" />
+            <button class="btn primary btn-sm" onclick="overrideIA('${p.id}')">Salvar</button>
+          </div>
+        </div>
+      `;
+      wrap.appendChild(details);
+    });
+}
+
+async function overrideIA(id) {
+  const input = document.getElementById('ia_' + id);
+  const v = Number(input?.value) || 0;
+  const r = await fetch('/api/admin/ia-override', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ participantId: id, score: v }),
+  }).then(r => r.json());
+  if (r.ok) showToast('Pontuação IA atualizada!', 'success');
+  else showToast('Erro ao salvar.', 'error');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+  );
+}
+
+loadState();
+</script>
+</body>
+</html>
