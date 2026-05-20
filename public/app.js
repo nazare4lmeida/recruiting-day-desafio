@@ -581,7 +581,7 @@ async function startCode() {
     setTimeout(() => goFinal(), 400);
   };
 
-  $("#codeEditor").addEventListener("keydown", (e) => {
+$("#codeEditor").addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
       e.preventDefault();
       const el = e.target,
@@ -591,7 +591,16 @@ async function startCode() {
       el.selectionStart = el.selectionEnd = s + 2;
     }
   });
-} // ← fecha startCode
+
+  // Bloqueia copiar e colar no editor
+  $("#codeEditor").addEventListener("copy", (e) => e.preventDefault());
+  $("#codeEditor").addEventListener("cut",  (e) => e.preventDefault());
+  $("#codeEditor").addEventListener("paste",(e) => {
+    e.preventDefault();
+    showToast("Cole não! Escreva o código você mesmo 😄", "warning", 2500);
+  });
+
+}
 
 // ──────────────────────────────────────────────────────────────
 // EXECUTAR TESTES
