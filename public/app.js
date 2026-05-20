@@ -532,44 +532,97 @@ async function startCode() {
   $("#testResultsSummary").classList.add("hidden");
 
   // Exemplo de uso
-  $("#codeExample").innerHTML = `
+$("#codeExample").innerHTML = `
 <span class="ce-k">function</span> <span class="ce-f">parOuImpar</span>(numero) {<br>
+
+&nbsp; <span class="ce-k">if</span> (!Number.isInteger(numero)) {<br>
+&nbsp; &nbsp; <span class="ce-k">return</span> <span class="ce-s">'invalido'</span>;<br>
+&nbsp; }<br><br>
+
 &nbsp; <span class="ce-k">if</span> (numero % <span class="ce-s">2</span> === <span class="ce-s">0</span>) {<br>
 &nbsp; &nbsp; <span class="ce-k">return</span> <span class="ce-s">'par'</span>;<br>
 &nbsp; } <span class="ce-k">else</span> {<br>
 &nbsp; &nbsp; <span class="ce-k">return</span> <span class="ce-s">'impar'</span>;<br>
 &nbsp; }<br>
-}
-  `;
+
+}<br><br>
+
+<span class="ce-c">// Exemplos:</span><br>
+
+<span class="ce-f">parOuImpar</span>(<span class="ce-s">4</span>) 
+→ <span class="ce-s">'par'</span><br>
+
+<span class="ce-f">parOuImpar</span>(<span class="ce-s">7</span>) 
+→ <span class="ce-s">'impar'</span><br>
+
+<span class="ce-f">parOuImpar</span>(<span class="ce-s">0</span>) 
+→ <span class="ce-s">'par'</span><br>
+
+<span class="ce-f">parOuImpar</span>(<span class="ce-s">2.5</span>) 
+→ <span class="ce-s">'invalido'</span><br>
+
+<span class="ce-f">parOuImpar</span>(<span class="ce-s">'10'</span>) 
+→ <span class="ce-s">'invalido'</span><br>
+
+<span class="ce-f">parOuImpar</span>(<span class="ce-k">NaN</span>) 
+→ <span class="ce-s">'invalido'</span>
+`;
+
+  // Lista de testes
 
   const testList = $("#testList");
   testList.innerHTML = "";
+
   state.challenge.tests.forEach((test, i) => {
     const div = document.createElement("div");
+
     div.className = "test-item";
     div.id = `test-item-${i}`;
+
     div.innerHTML = `
       <div class="test-status pending" id="test-status-${i}">?</div>
-      <div class="test-name" id="test-name-${i}">${escapeHtml(test.name)}</div>
+
+      <div class="test-info">
+        <div class="test-name" id="test-name-${i}">
+          ${escapeHtml(test.name)}
+        </div>
+
+        <div class="test-meta">
+          Entrada: <strong>${escapeHtml(JSON.stringify(test.input))}</strong>
+          → Esperado:
+          <strong>${escapeHtml(test.expected)}</strong>
+        </div>
+      </div>
     `;
+
     testList.appendChild(div);
   });
 
   $("#resetCodeBtn").onclick = () => {
     if (confirm("Resetar seu código?")) {
       $("#codeEditor").value = state.challenge.starterCode;
+
       $("#testResultsSummary").classList.add("hidden");
+
       state.challenge.tests.forEach((_, i) => {
         const s = $(`#test-status-${i}`);
         const n = $(`#test-name-${i}`);
+
         if (s) {
           s.className = "test-status pending";
           s.textContent = "?";
         }
+
         if (n) {
           n.className = "test-name";
         }
+
+        const item = document.getElementById(`test-item-${i}`);
+        if (item) {
+          item.classList.remove("passed", "failed");
+        }
       });
+
       showToast("Código resetado.", "info", 2000);
     }
   };
@@ -581,99 +634,226 @@ async function startCode() {
     setTimeout(() => goFinal(), 400);
   };
 
-$("#codeEditor").addEventListener("keydown", (e) => {
+  $("#codeEditor").addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
       e.preventDefault();
-      const el = e.target,
-        s = el.selectionStart;
+
+      const el = e.target;
+      const s = el.selectionStart;
+
       el.value =
-        el.value.substring(0, s) + "  " + el.value.substring(el.selectionEnd);
+        el.value.substring(0, s) +
+        "  " +
+        el.value.substring(el.selectionEnd);
+
       el.selectionStart = el.selectionEnd = s + 2;
     }
   });
 
   // Bloqueia copiar e colar no editor
   $("#codeEditor").addEventListener("copy", (e) => e.preventDefault());
-  $("#codeEditor").addEventListener("cut",  (e) => e.preventDefault());
-  $("#codeEditor").addEventListener("paste",(e) => {
-    e.preventDefault();
-    showToast("Cole não! Escreva o código você mesmo 😄", "warning", 2500);
-  });
 
+  $("#codeEditor").addEventListener("cut", (e) => e.preventDefault());
+
+  $("#codeEditor").addEventListener("paste", (e) => {
+    e.preventDefault();
+
+    showToast(
+      "Cole não! Escreva o código você mesmo 😄",
+      "warning",
+      2500
+    );
+  });
 }
 
 // ──────────────────────────────────────────────────────────────
 // EXECUTAR TESTES
 // ──────────────────────────────────────────────────────────────
 async function runTests() {
+
   const code = $("#codeEditor").value;
+
   const btn = $("#runCodeBtn");
+
   btn.disabled = true;
   btn.textContent = "⏳ Executando...";
 
   const r = await fetch("/api/code/submit", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ participantId: state.me.id, code }),
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      participantId: state.me.id,
+      code,
+    }),
   })
     .then((r) => r.json())
-    .catch(() => ({ compileError: "Erro de conexão com o servidor." }));
+    .catch(() => ({
+      compileError: "Erro de conexão com o servidor.",
+    }));
 
   btn.disabled = false;
   btn.textContent = "▶ Executar Testes";
 
   const summary = $("#testResultsSummary");
 
+  // ──────────────────────────────────────────
+  // ERRO DE COMPILAÇÃO
+  // ──────────────────────────────────────────
   if (r.compileError) {
+
     state.challenge.tests.forEach((_, i) => {
+
       const s = $(`#test-status-${i}`);
       const n = $(`#test-name-${i}`);
+      const item = document.getElementById(`test-item-${i}`);
+
       if (s) {
         s.className = "test-status fail";
         s.textContent = "✗";
       }
+
       if (n) {
         n.className = "test-name fail";
       }
+
+      if (item) {
+        item.classList.add("failed");
+      }
     });
+
     summary.classList.remove("hidden");
-    summary.style.cssText =
-      "color:var(--gt-danger);border:1px solid rgba(220,38,38,.3);border-radius:var(--r);padding:12px;text-align:center;font-weight:600;font-size:13px;";
+
+    summary.style.cssText = `
+      color:var(--gt-danger);
+      border:1px solid rgba(220,38,38,.3);
+      border-radius:var(--r);
+      padding:12px;
+      text-align:center;
+      font-weight:600;
+      font-size:13px;
+    `;
+
     summary.textContent = `⚠ Erro: ${r.compileError}`;
-    showToast("Erro no código. Verifique e tente novamente.", "error");
+
+    showToast(
+      "Erro no código. Verifique e tente novamente.",
+      "error"
+    );
+
     return r;
   }
 
+  // ──────────────────────────────────────────
+  // RESULTADOS DOS TESTES
+  // ──────────────────────────────────────────
   const passed = r.results.filter((t) => t.passed).length;
+
   r.results.forEach((t, i) => {
+
     const s = $(`#test-status-${i}`);
     const n = $(`#test-name-${i}`);
+    const item = document.getElementById(`test-item-${i}`);
+
     if (s) {
       s.className = `test-status ${t.passed ? "pass" : "fail"}`;
       s.textContent = t.passed ? "✓" : "✗";
     }
+
     if (n) {
       n.className = `test-name ${t.passed ? "pass" : "fail"}`;
+    }
+
+    if (item) {
+      item.classList.remove("passed", "failed");
+      item.classList.add(t.passed ? "passed" : "failed");
+    }
+
+    // Exibe retorno recebido
+    if (!document.getElementById(`test-output-${i}`)) {
+
+      const output = document.createElement("div");
+
+      output.id = `test-output-${i}`;
+      output.className = "test-output";
+
+      output.innerHTML = `
+        Recebido:
+        <strong>${escapeHtml(JSON.stringify(t.received))}</strong>
+      `;
+
+      item?.appendChild(output);
+
+    } else {
+
+      document.getElementById(`test-output-${i}`).innerHTML = `
+        Recebido:
+        <strong>${escapeHtml(JSON.stringify(t.received))}</strong>
+      `;
     }
   });
 
   state.codeScore = r.earned;
 
+  // ──────────────────────────────────────────
+  // RESUMO FINAL
+  // ──────────────────────────────────────────
   summary.classList.remove("hidden");
+
   if (passed === r.results.length) {
-    summary.style.cssText =
-      "color:var(--gt-success);border:1px solid rgba(10,135,90,.3);border-radius:var(--r);padding:12px;text-align:center;font-weight:600;font-size:13px;";
-    summary.textContent = `🎉 ${passed}/${r.results.length} testes passaram — ${r.earned} pts!`;
-    showToast("Todos os testes passaram! 🎉", "success", 4000);
+
+    summary.style.cssText = `
+      color:var(--gt-success);
+      border:1px solid rgba(10,135,90,.3);
+      border-radius:var(--r);
+      padding:12px;
+      text-align:center;
+      font-weight:600;
+      font-size:13px;
+    `;
+
+    summary.innerHTML = `
+      🎉 ${passed}/${r.results.length} testes passaram
+      <br>
+      Pontuação total: <strong>${r.earned} pts</strong>
+    `;
+
+    showToast(
+      "Todos os testes passaram! 🎉",
+      "success",
+      4000
+    );
+
   } else {
-    summary.style.cssText =
-      "color:var(--gt-warning);border:1px solid rgba(245,158,11,.3);border-radius:var(--r);padding:12px;text-align:center;font-weight:600;font-size:13px;";
-    summary.textContent = `⚠ ${passed}/${r.results.length} testes passaram — ${r.earned} pts`;
-    showToast(`${passed}/${r.results.length} testes passaram.`, "info");
+
+    summary.style.cssText = `
+      color:var(--gt-warning);
+      border:1px solid rgba(245,158,11,.3);
+      border-radius:var(--r);
+      padding:12px;
+      text-align:center;
+      font-weight:600;
+      font-size:13px;
+    `;
+
+    summary.innerHTML = `
+      ⚠ ${passed}/${r.results.length} testes passaram
+      <br>
+      Pontuação atual: <strong>${r.earned} pts</strong>
+    `;
+
+    showToast(
+      `${passed}/${r.results.length} testes passaram.`,
+      "info"
+    );
   }
 
   return r;
 }
+
 // ──────────────────────────────────────────────────────────────
 // TELA FINAL
 // ──────────────────────────────────────────────────────────────
