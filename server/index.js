@@ -13,12 +13,31 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json({ limit: '1mb' }));
+
+// ---------------- ADMIN AUTH ----------------
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'troque-esta-senha';
+
+function requireAdmin(req, res, next) {
+  const header = req.headers.authorization || '';
+  const [scheme, encoded] = header.split(' ');
+  if (scheme === 'Basic' && encoded) {
+    const [user, pass] = Buffer.from(encoded, 'base64').toString().split(':');
+    if (user === ADMIN_USER && pass === ADMIN_PASSWORD) return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="Recruiting Day Admin"');
+  return res.status(401).send('Autenticação necessária');
+}
+
+// IMPORTANTE: proteger ANTES do express.static
+app.get('/admin.html', requireAdmin);
+app.use('/api/admin', requireAdmin);
+
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ---------------- ESTADO (em memória) ----------------
 const state = {
-  participants: new Map(), // id -> { id, name, socketId, stage, eliminated, quizScore, quizAnswers, iaScore, iaAnswers, codeScore, codeResults, startedAt, finishedAt }
-  // Cutoffs
+  participants: new Map(),
   cutoff: { stage1: 20, stage2: 10, stage3: 5 },
 };
 
@@ -42,8 +61,6 @@ function broadcastRanking() {
 }
 
 // ---------------- API ----------------
-
-// Sanitiza questões para o cliente (sem revelar `correct`)
 app.get('/api/questions', (req, res) => {
   res.json(QUESTIONS.map(q => ({
     id: q.id, level: q.level, points: q.points,
@@ -63,7 +80,6 @@ app.get('/api/challenge', (req, res) => res.json({
   pointsPerTest: CHALLENGE.pointsPerTest
 }));
 
-// Registrar participante
 app.post('/api/register', (req, res) => {
   const name = (req.body.name || '').trim();
   if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
@@ -81,7 +97,6 @@ app.post('/api/register', (req, res) => {
   res.json({ id, name });
 });
 
-// Responder uma questão do quiz
 app.post('/api/quiz/answer', (req, res) => {
   const { participantId, questionId, optionIndex, timedOut } = req.body;
   const p = state.participants.get(participantId);
@@ -105,9 +120,8 @@ app.post('/api/quiz/answer', (req, res) => {
   });
 });
 
-// Submeter respostas da etapa 2 (IA & Soft Skills) — rubrica automática simples
 app.post('/api/ia/submit', (req, res) => {
-  const { participantId, answers } = req.body; // answers: [{ scenarioId, text }]
+  const { participantId, answers } = req.body;
   const p = state.participants.get(participantId);
   if (!p) return res.status(404).json({ error: 'Participante não encontrado' });
 
@@ -117,7 +131,7 @@ app.post('/api/ia/submit', (req, res) => {
     const a = (answers || []).find(x => x.scenarioId === s.id);
     const text = (a?.text || '').toLowerCase().trim();
     let score = 0;
-    if (text.length >= s.minLength) score += s.maxPoints * 0.4; // ponto por comprimento mínimo
+    if (text.length >= s.minLength) score += s.maxPoints * 0.4;
     const hits = s.keywords.filter(k => text.includes(k.toLowerCase())).length;
     const kwRatio = Math.min(1, hits / Math.min(s.keywords.length, 4));
     score += s.maxPoints * 0.6 * kwRatio;
@@ -131,7 +145,6 @@ app.post('/api/ia/submit', (req, res) => {
   res.json({ total, detailed });
 });
 
-// Submeter código - roda testes em sandbox
 app.post('/api/code/submit', (req, res) => {
   const { participantId, code } = req.body;
   const p = state.participants.get(participantId);
@@ -170,14 +183,13 @@ app.post('/api/code/submit', (req, res) => {
   }
 
   const earned = passed * CHALLENGE.pointsPerTest;
-  // Mantém o melhor score (permite retentativas)
   if (earned > p.codeScore) p.codeScore = earned;
   p.finishedAt = Date.now();
   broadcastRanking();
   res.json({ results, earned, totalCode: p.codeScore, finished: true });
 });
 
-// ---------------- ADMIN ----------------
+// ---------------- ADMIN (protegido por requireAdmin acima) ----------------
 app.get('/api/admin/state', (req, res) => {
   res.json({
     cutoff: state.cutoff,
@@ -190,9 +202,8 @@ app.get('/api/admin/state', (req, res) => {
   });
 });
 
-// Eliminar/promover etapa: aplica cutoff baseado no ranking atual
 app.post('/api/admin/advance', (req, res) => {
-  const { stage } = req.body; // 1, 2 ou 3
+  const { stage } = req.body;
   const cutoffs = { 1: state.cutoff.stage1, 2: state.cutoff.stage2, 3: state.cutoff.stage3 };
   const keep = cutoffs[stage];
   if (!keep) return res.status(400).json({ error: 'Etapa inválida' });
@@ -244,5 +255,6 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`\n🚀 Recruiting Day rodando em http://localhost:${PORT}`);
   console.log(`   • Participante: http://localhost:${PORT}/`);
-  console.log(`   • Painel Admin: http://localhost:${PORT}/admin.html\n`);
+  console.log(`   • Painel Admin: http://localhost:${PORT}/admin.html`);
+  console.log(`   • Admin user: ${ADMIN_USER} (defina ADMIN_PASSWORD no .env)\n`);
 });
