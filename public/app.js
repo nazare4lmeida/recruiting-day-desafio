@@ -590,6 +590,64 @@ async function startCode() {
       el.selectionStart = el.selectionEnd = s + 2;
     }
   });
+  // ──────────────────────────────────────────────────────────────
+// EXECUTAR TESTES
+// ──────────────────────────────────────────────────────────────
+async function runTests() {
+  const code = $('#codeEditor').value;
+  const btn = $('#runCodeBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Executando...';
+
+  const r = await fetch('/api/code/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ participantId: state.me.id, code }),
+  }).then(r => r.json()).catch(() => ({ compileError: 'Erro de conexão com o servidor.' }));
+
+  btn.disabled = false;
+  btn.textContent = '▶ Executar Testes';
+
+  const summary = $('#testResultsSummary');
+
+  if (r.compileError) {
+    state.challenge.tests.forEach((_, i) => {
+      const s = $(`#test-status-${i}`);
+      const n = $(`#test-name-${i}`);
+      if (s) { s.className = 'test-status fail'; s.textContent = '✗'; }
+      if (n) { n.className = 'test-name fail'; }
+    });
+    summary.classList.remove('hidden');
+    summary.style.cssText = 'color:var(--gt-danger);border:1px solid rgba(220,38,38,.3);border-radius:var(--r);padding:12px;text-align:center;font-weight:600;font-size:13px;';
+    summary.textContent = `⚠ Erro: ${r.compileError}`;
+    showToast('Erro no código. Verifique e tente novamente.', 'error');
+    return r;
+  }
+
+  // Atualiza ícone de cada teste individualmente
+  const passed = r.results.filter(t => t.passed).length;
+  r.results.forEach((t, i) => {
+    const s = $(`#test-status-${i}`);
+    const n = $(`#test-name-${i}`);
+    if (s) { s.className = `test-status ${t.passed ? 'pass' : 'fail'}`; s.textContent = t.passed ? '✓' : '✗'; }
+    if (n) { n.className = `test-name ${t.passed ? 'pass' : 'fail'}`; }
+  });
+
+  state.codeScore = r.earned;
+
+  summary.classList.remove('hidden');
+  if (passed === r.results.length) {
+    summary.style.cssText = 'color:var(--gt-success);border:1px solid rgba(10,135,90,.3);border-radius:var(--r);padding:12px;text-align:center;font-weight:600;font-size:13px;';
+    summary.textContent = `🎉 ${passed}/${r.results.length} testes passaram — ${r.earned} pts!`;
+    showToast('Todos os testes passaram! 🎉', 'success', 4000);
+  } else {
+    summary.style.cssText = 'color:var(--gt-warning);border:1px solid rgba(245,158,11,.3);border-radius:var(--r);padding:12px;text-align:center;font-weight:600;font-size:13px;';
+    summary.textContent = `⚠ ${passed}/${r.results.length} testes passaram — ${r.earned} pts`;
+    showToast(`${passed}/${r.results.length} testes passaram.`, 'info');
+  }
+
+  return r;
+}
 }
 // ──────────────────────────────────────────────────────────────
 // TELA FINAL
