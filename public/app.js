@@ -872,15 +872,15 @@ function goFinal() {
   // Certificado
   const total = state.quizScore + state.codeScore;
   let level, sub, icon;
-  if (total >= 1200) {
+  if (total >= 400) {
     level = "Master";
     sub = "Desempenho excepcional!";
     icon = "🚀";
-  } else if (total >= 900) {
+  } else if (total >= 300) {
     level = "Avançado";
     sub = "Excelente resultado!";
     icon = "⭐";
-  } else if (total >= 500) {
+  } else if (total >= 200) {
     level = "Intermediário";
     sub = "Bom trabalho!";
     icon = "⭐";
