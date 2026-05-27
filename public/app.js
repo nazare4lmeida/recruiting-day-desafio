@@ -524,15 +524,23 @@ $("#submitIaBtn").addEventListener("click", async () => {
 // ──────────────────────────────────────────────────────────────
 async function startCode() {
   show("code");
-  state.challenge = await fetch("/api/challenge").then((r) => r.json());
+state.challenge = await fetch(`/api/challenge?participantId=${state.me.id}`).then((r) => r.json());
 
   $("#codeTitle").textContent = state.challenge.title;
   $("#codeDescription").textContent = state.challenge.description;
   $("#codeEditor").value = state.challenge.starterCode;
   $("#testResultsSummary").classList.add("hidden");
 
+  // Trava imediata se o aluno já tiver enviado uma tentativa antes (verificação ao carregar)
+  if (state.challenge.maxAttempts === 1 && state.challenge.attemptsDone >= 1) {
+    $("#codeEditor").disabled = true;
+    $("#runCodeBtn").disabled = true;
+    $("#runCodeBtn").textContent = "🔒 Tentativas Esgotadas";
+    $("#finishCodeBtn").disabled = true;
+  }
+
   // Exemplo de uso
-$("#codeExample").innerHTML = `
+  $("#codeExample").innerHTML = `
 <span class="ce-k">function</span> <span class="ce-f">parOuImpar</span>(numero) {<br>
 
 &nbsp; <span class="ce-k">if</span> (!Number.isInteger(numero)) {<br>
@@ -569,7 +577,6 @@ $("#codeExample").innerHTML = `
 `;
 
   // Lista de testes
-
   const testList = $("#testList");
   testList.innerHTML = "";
 
@@ -599,9 +606,14 @@ $("#codeExample").innerHTML = `
   });
 
   $("#resetCodeBtn").onclick = () => {
+    // Impede resetar se já estiver bloqueado por tentativa única
+    if (state.challenge.maxAttempts === 1 && state.challenge.attemptsDone >= 1) {
+      showToast("Não é possível resetar um desafio já enviado.", "error");
+      return;
+    }
+
     if (confirm("Resetar seu código?")) {
       $("#codeEditor").value = state.challenge.starterCode;
-
       $("#testResultsSummary").classList.add("hidden");
 
       state.challenge.tests.forEach((_, i) => {
@@ -630,6 +642,11 @@ $("#codeExample").innerHTML = `
   $("#runCodeBtn").onclick = runTests;
 
   $("#finishCodeBtn").onclick = async () => {
+    if ($("#runCodeBtn").disabled && state.challenge.maxAttempts === 1) {
+      // Se já executou a única tentativa, apenas avança de tela
+      goFinal();
+      return;
+    }
     await runTests();
     setTimeout(() => goFinal(), 400);
   };
@@ -652,12 +669,9 @@ $("#codeExample").innerHTML = `
 
   // Bloqueia copiar e colar no editor
   $("#codeEditor").addEventListener("copy", (e) => e.preventDefault());
-
   $("#codeEditor").addEventListener("cut", (e) => e.preventDefault());
-
   $("#codeEditor").addEventListener("paste", (e) => {
     e.preventDefault();
-
     showToast(
       "Cole não! Escreva o código você mesmo 😄",
       "warning",
@@ -670,9 +684,7 @@ $("#codeExample").innerHTML = `
 // EXECUTAR TESTES
 // ──────────────────────────────────────────────────────────────
 async function runTests() {
-
   const code = $("#codeEditor").value;
-
   const btn = $("#runCodeBtn");
 
   btn.disabled = true;
@@ -680,11 +692,9 @@ async function runTests() {
 
   const r = await fetch("/api/code/submit", {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json",
     },
-
     body: JSON.stringify({
       participantId: state.me.id,
       code,
@@ -695,8 +705,18 @@ async function runTests() {
       compileError: "Erro de conexão com o servidor.",
     }));
 
-  btn.disabled = false;
-  btn.textContent = "▶ Executar Testes";
+  // Se o backend confirmou que era tentativa única ou foi bloqueado por limite
+  if (state.challenge.maxAttempts === 1 || r.isLocked) {
+    state.challenge.attemptsDone = 1; // Atualiza o estado local
+    $("#codeEditor").disabled = true;
+    btn.disabled = true;
+    btn.textContent = "🔒 Tentativas Esgotadas";
+    showToast("Código enviado! Sua tentativa única foi registrada.", "info", 3000);
+  } else {
+    // Libera o botão apenas se não for de tentativa única
+    btn.disabled = false;
+    btn.textContent = "▶ Executar Testes";
+  }
 
   const summary = $("#testResultsSummary");
 
@@ -704,9 +724,7 @@ async function runTests() {
   // ERRO DE COMPILAÇÃO
   // ──────────────────────────────────────────
   if (r.compileError) {
-
     state.challenge.tests.forEach((_, i) => {
-
       const s = $(`#test-status-${i}`);
       const n = $(`#test-name-${i}`);
       const item = document.getElementById(`test-item-${i}`);
@@ -726,7 +744,6 @@ async function runTests() {
     });
 
     summary.classList.remove("hidden");
-
     summary.style.cssText = `
       color:var(--gt-danger);
       border:1px solid rgba(220,38,38,.3);
@@ -738,11 +755,7 @@ async function runTests() {
     `;
 
     summary.textContent = `⚠ Erro: ${r.compileError}`;
-
-    showToast(
-      "Erro no código. Verifique e tente novamente.",
-      "error"
-    );
+    showToast("Erro no código. Verifique e tente novamente.", "error");
 
     return r;
   }
@@ -753,7 +766,6 @@ async function runTests() {
   const passed = r.results.filter((t) => t.passed).length;
 
   r.results.forEach((t, i) => {
-
     const s = $(`#test-status-${i}`);
     const n = $(`#test-name-${i}`);
     const item = document.getElementById(`test-item-${i}`);
@@ -774,21 +786,15 @@ async function runTests() {
 
     // Exibe retorno recebido
     if (!document.getElementById(`test-output-${i}`)) {
-
       const output = document.createElement("div");
-
       output.id = `test-output-${i}`;
       output.className = "test-output";
-
       output.innerHTML = `
         Recebido:
         <strong>${escapeHtml(JSON.stringify(t.received))}</strong>
       `;
-
       item?.appendChild(output);
-
     } else {
-
       document.getElementById(`test-output-${i}`).innerHTML = `
         Recebido:
         <strong>${escapeHtml(JSON.stringify(t.received))}</strong>

@@ -1,5 +1,8 @@
 module.exports = {
   title: "Par, Ímpar ou Inválido",
+  
+  // Define o limite para o backend/app.js ler (se aplicável na sua estrutura)
+  maxAttempts: 1, 
 
   description: `
 Implemente a função parOuImpar(numero) que recebe um valor
@@ -8,6 +11,12 @@ e retorna uma string indicando se ele é:
 - "par"
 - "impar"
 - "invalido"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚨 ATENÇÃO: DESAFIO DE TENTATIVA ÚNICA 🚨
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Você terá apenas **1 tentativa** para enviar a sua solução e rodar os testes. 
+Revise bem o seu código antes de submeter!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📥 ENTRADA:
@@ -110,7 +119,6 @@ Tente escrever uma solução:
   `.trim(),
 
   starterCode: `function parOuImpar(numero) {
-
   // Verifica se é um número inteiro válido
 
 
@@ -126,43 +134,36 @@ Tente escrever uma solução:
       input: 4,
       expected: "par",
     },
-
     {
       name: "Número ímpar positivo",
       input: 7,
       expected: "impar",
     },
-
     {
       name: "Zero",
       input: 0,
       expected: "par",
     },
-
     {
       name: "Número negativo par",
       input: -8,
       expected: "par",
     },
-
     {
       name: "Número negativo ímpar",
       input: -3,
       expected: "impar",
     },
-
     {
       name: "Número decimal",
       input: 2.5,
       expected: "invalido",
     },
-
     {
       name: "Texto",
       input: "10",
       expected: "invalido",
     },
-
     {
       name: "Null",
       input: null,
