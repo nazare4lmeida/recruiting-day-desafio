@@ -3,158 +3,114 @@
 module.exports = [
   {
     id: 1,
-    title: 'Prompt Engineering em Equipe',
+    title: 'Prompt Engineering Avançado em Equipe',
 
     scenario: `
-Sua equipe trabalha em uma empresa de tecnologia.
+Sua equipe atua no time de desenvolvimento e inovação de uma Tech Company.
 
-Um cliente importante ficou insatisfeito porque houve atraso
-na entrega de um projeto.
-
-O gestor pediu que vocês utilizassem IA Generativa para criar
-um e-mail profissional para esse cliente.
+Um cliente premium de um projeto de software ficou insatisfeito devido a um atraso crucial na entrega de uma feature. O gestor de contas pediu que o time técnico utilize IA Generativa para redigir a resposta. No entanto, o prompt inicial gerado pelo estagiário faliu em trazer um resultado profissional.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-❌ PROMPT ORIGINAL (ruim):
+❌ PROMPT ORIGINAL (Iniciante / Sem técnicas de IA):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 "faz um email pra cliente sobre atraso"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👥 DESAFIO EM EQUIPE:
+👥 DINÂMICA DE FLUIDEZ EM EQUIPE (Papéis):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Vocês devem trabalhar juntos para:
-
-1. Identificar os problemas do prompt original
-2. Melhorar o prompt de forma profissional
-3. Garantir que a IA gere uma resposta clara e útil
-4. Explicar rapidamente as decisões tomadas pela equipe
+Para simular um ambiente ágil real, dividam-se rapidamente nestas funções:
+1. Prompt Engineer (Foca na estrutura técnica da IA, variáveis e delimitadores)
+2. Business Analyst / Product Owner (Garante o tom corporativo, empatia e contexto do negócio)
+3. QA / Reviewer (Valida se o prompt não vai gerar alucinações e se cumpre todas as constraints)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✏️ SUA TAREFA:
+✏️ SUA TAREFA TÉCNICA:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Reescreva o prompt de forma clara, completa e profissional.
+Reescrevam o prompt aplicando técnicas reais de Engenharia de Prompts. 
+O prompt final de vocês DEVE conter obrigatoriamente:
 
-O novo prompt deve orientar a IA a gerar um e-mail:
+1. DEFINIÇÃO DE PERSONA (Atuação / Role da IA)
+   → Ex: "Atue como um Diretor de Tecnologia sênior..."
 
-- profissional
-- organizado
-- empático
-- objetivo
-- adequado para um cliente real
+2. TÉCNICA DE DELIMITADORES
+   → Uso de tags como ### Contexto ###, [Instruções] ou XML (<dados>) para isolar as variáveis e evitar vazamento de prompt.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💡 O QUE O PROMPT DEVE CONTER:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. REGRAS DE CONSTRAINTS (Restrições Negativas)
+   → Dizer explicitamente o que a IA NÃO pode fazer (ex: "Não use jargões excessivamente técnicos", "Não prometa prazos impossíveis").
 
-1. CONTEXTO
-→ Quem está escrevendo?
-→ Quem vai receber?
-→ Qual é o projeto?
-→ Qual foi o problema?
-
-2. TOM
-→ Formal?
-→ Empático?
-→ Profissional?
-
-3. OBJETIVO
-→ Pedir desculpas
-→ Explicar o atraso
-→ Informar novo prazo
-→ Manter boa relação com o cliente
-
-4. ESTRUTURA
-→ Saudação
-→ Explicação
-→ Solução
-→ Encerramento
-
-5. DETALHES IMPORTANTES
-→ Novo prazo
-→ Próximos passos
-→ Disponibilidade para dúvidas
-
-6. FORMATO
-→ Exemplo:
-"Responda apenas com o e-mail final, sem comentários extras"
+4. FEW-SHOT PROMPTING (Opcional, mas pontua mais!)
+   → Fornecer um pequeno exemplo de estrutura ou padrão de escrita esperado dentro do prompt.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧠 DESAFIO EXTRA:
+🧠 JUSTIFICATIVA TÉCNICA (O Desafio Extra):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Depois de criar o prompt, a equipe deve responder:
-
-- O que estava ruim no prompt original?
-- O que vocês melhoraram?
-- Por que essas melhorias ajudam a IA?
+Ao final do prompt, a equipe deve anexar uma rápida nota técnica respondendo:
+- Quais conceitos de IA Generativa vocês aplicaram para evitar "alucinações" do modelo?
+- Como a soft skill de "Negociação e Empatia" (Business Analyst) se traduziu nas instruções que vocês deram para a IA?
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏆 PONTUAÇÃO:
+🏆 CRITÉRIOS DE PONTUAÇÃO (Max: 100):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-A equipe ganhará mais pontos se:
-
-✔ O prompt for claro e específico
-✔ O texto estiver bem organizado
-✔ A comunicação for profissional
-✔ A equipe demonstrar colaboração
-✔ A solução parecer realista
-✔ As melhorias forem bem justificadas
+✔ [25 pts] Técnicas de IA Aplicadas: Uso correto de Personas, Delimitadores e Constraints.
+✔ [20 pts] Contexto e Variáveis: Se o prompt entrega dados ricos (novo prazo, causa, próximos passos).
+✔ [15 pts] Estrutura e Formatação do Output: Comandos claros de como a IA deve formatar a resposta.
+✔ [15 pts] Justificativa Técnica: Uso correto dos termos de IA no relatório da equipe.
+✔ [15 pts] Soft Skills / Tom do E-mail: Equilíbrio perfeito entre profissionalismo e empatia.
+✔ [10 pts] Colaboração Dinâmica: Divisão clara dos papéis e fluidez na apresentação da solução.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⏱ TEMPO:
+⏱ TEMPO DE SPRINT:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-10 minutos
+12 minutos
     `.trim(),
 
     keywords: [
+      'prompt engineering',
+      'persona',
+      'delimitadores',
+      'constraints',
+      'restrições',
+      'alucinação',
+      'few-shot',
       'contexto',
       'tom',
       'formal',
       'empático',
       'profissional',
-      'cliente',
       'atraso',
       'prazo',
       'solução',
-      'objetivo',
       'estrutura',
-      'saudação',
-      'encerramento',
       'projeto',
       'entrega',
-      'desculpas',
-      'explicação',
       'instrução',
       'específico',
-      'claro',
-      'útil',
-      'detalhado',
-      'organizado',
-      'próximos passos',
-      'e-mail',
-      'resposta',
+      'output',
+      'variáveis',
       'comunicação',
       'colaboração',
       'equipe',
       'justificativa',
-      'profissionalismo'
+      'soft skills',
+      'qa',
+      'business analyst'
     ],
 
-    minLength: 250,
+    minLength: 350,
 
     evaluationCriteria: {
-      clareza: 20,
-      contexto: 20,
-      estrutura: 15,
-      profissionalismo: 15,
-      criatividade: 10,
-      colaboração: 10,
-      justificativa: 10
+      tecnicas_ia: 25,
+      contexto_variaveis: 20,
+      estrutura_output: 15,
+      justificativa_tecnica: 15,
+      soft_skills_tom: 15,
+      colaboracao_equipe: 10
     },
 
     maxPoints: 100
