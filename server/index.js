@@ -149,8 +149,7 @@ app.post("/api/quiz/answer", (req, res) => {
   if (p.quizAnswers.find((a) => a.questionId === questionId))
     return res.status(400).json({ error: "Já respondeu esta pergunta" });
 
-  const correct = !timedOut && optionIndex === q.correct;
-  const earned = correct ? q.points : 0;
+const correct = !timedOut && Number(optionIndex) === Number(q.correct);  const earned = correct ? q.points : 0;
   p.quizScore += earned;
   p.quizAnswers.push({
     questionId,
